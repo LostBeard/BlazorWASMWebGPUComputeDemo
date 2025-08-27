@@ -8,9 +8,12 @@
 <div style="padding: 1rem;">
     <p>This demo is based off the tutorial linked below.</p>
     <a href="https://webgpufundamentals.org/webgpu/lessons/webgpu-fundamentals.html#run-computations-on-the-gpu">Run computations on the GPU</a>
+    <p>
+        This basic example demonstrates a very basiccompute shader that simple multiplies the input data by 2 and returns the result.
+    </p>
 </div>
 <div style="padding: 1rem;">
-    <button class="btn btn-primary" disabled="@_running" @onclick="Run">Click me</button>
+    <button class="btn btn-primary" disabled="@_running" @onclick="Run">Run</button>
 </div>
 <div style="padding: 1rem;">
     <pre>
@@ -77,8 +80,13 @@
                 }
             });
 
-            using var input = new Float32Array(new float[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 });
-            var inputByteLength = input.ByteLength;
+            // input data
+            var input = new float[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
+            Log($@"Input: {string.Join(", ", input)}");
+
+
+            using var inputFloatArray = new Float32Array(input);
+            var inputByteLength = inputFloatArray.ByteLength;
 
             // create a buffer on the GPU to hold our computation
             // input and output
@@ -88,8 +96,9 @@
                 Size = (ulong)inputByteLength,
                 Usage = GPUBufferUsage.Storage | GPUBufferUsage.CopySrc | GPUBufferUsage.CopyDst,
             });
+
             // Copy our input data to that buffer
-            device.Queue.WriteBuffer(workBuffer, 0, input);
+            device.Queue.WriteBuffer(workBuffer, 0, inputFloatArray);
 
             using var resultBuffer = device.CreateBuffer(new GPUBufferDescriptor
             {
@@ -135,18 +144,17 @@
 
             // Read the results
             await resultBuffer.MapAsync(GPUMapMode.Read);
-            using var result = new Float32Array(resultBuffer.GetMappedRange());
+            using var outputFloatArray = new Float32Array(resultBuffer.GetMappedRange());
 
-            float[] resultF = result.ToArray();
-
-            Log($@"Input: {string.Join(", ", input.ToArray())}");
-            Log($@"Result: {string.Join(", ", resultF)}");
+            float[] output = outputFloatArray.ToArray();
+            Log($@"Result: {string.Join(", ", output)}");
 
             resultBuffer.Unmap();
         }
         finally
         {
             _running = false;
+            StateHasChanged();
         }
     }
 }
