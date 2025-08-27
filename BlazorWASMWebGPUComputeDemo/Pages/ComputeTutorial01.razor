@@ -1,0 +1,152 @@
+﻿@page "/"
+@using SpawnDev.BlazorJS.JsonConverters
+
+<PageTitle>WebGPU Compute Tutorial 1 Demo</PageTitle>
+
+<h1>WebGPU Compute Tutorial 1 Demo</h1>
+
+<div style="padding: 1rem;">
+    <p>This demo is based off the tutorial linked below.</p>
+    <a href="https://webgpufundamentals.org/webgpu/lessons/webgpu-fundamentals.html#run-computations-on-the-gpu">Run computations on the GPU</a>
+</div>
+<div style="padding: 1rem;">
+    <button class="btn btn-primary" disabled="@_running" @onclick="Run">Click me</button>
+</div>
+<div style="padding: 1rem;">
+    <pre>
+        @_log
+    </pre>
+</div>
+
+@code {
+    [Inject]
+    BlazorJSRuntime JS { get; set; } = default!;
+
+    string _log = "Ready";
+    bool _running = false;
+
+    void Log(string msg = "", bool clear = false)
+    {
+        if (clear) _log = "";
+        _log += msg + "\n";
+        StateHasChanged();
+    }
+
+    private async Task Run()
+    {
+        if (_running) return;
+        _running = true;
+        try
+        {
+            Log(clear: true);
+
+            var adapter = JS.IsUndefined("navigator.gpu?.requestAdapter") ? null : await JS.CallAsync<GPUAdapter>("navigator.gpu.requestAdapter");
+            if (adapter == null)
+            {
+                Log("WebGPU not supported");
+                return;
+            }
+            using var device = await adapter.RequestDevice();
+            if (device == null)
+            {
+                Log("WebGPU not supported");
+                return;
+            }
+            Log("WebGPU supported");
+
+            using var module = device.CreateShaderModule(new GPUShaderModuleDescriptor
+            {
+                Label = "doubling compute module",
+                Code = @"
+                @group(0) @binding(0) var<storage, read_write> data: array<f32>;
+
+                @compute @workgroup_size(1) fn computeSomething(@builtin(global_invocation_id) id: vec3u) {
+                    let i = id.x;
+                    data[i] = data[i] * 2.0;
+                }
+                ",
+            });
+
+            using var pipeline = device.CreateComputePipeline(new GPUComputePipelineDescriptor
+            {
+                Label = "doubling compute pipeline",
+                Layout = GPUAutoLayoutMode.Auto,
+                Compute = new GPUProgrammableStage
+                {
+                    Module = module,
+                }
+            });
+
+            using var input = new Float32Array(new float[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 });
+            var inputByteLength = input.ByteLength;
+
+            // create a buffer on the GPU to hold our computation
+            // input and output
+            using var workBuffer = device.CreateBuffer(new GPUBufferDescriptor
+            {
+                Label = "work buffer",
+                Size = (ulong)inputByteLength,
+                Usage = GPUBufferUsage.Storage | GPUBufferUsage.CopySrc | GPUBufferUsage.CopyDst,
+            });
+            // Copy our input data to that buffer
+            device.Queue.WriteBuffer(workBuffer, 0, input);
+
+            using var resultBuffer = device.CreateBuffer(new GPUBufferDescriptor
+            {
+                Label = "result buffer",
+                Size = (ulong)inputByteLength,
+                Usage = GPUBufferUsage.MapRead | GPUBufferUsage.CopyDst
+            });
+
+            using var bindGroup = device.CreateBindGroup(new GPUBindGroupDescriptor
+            {
+                Label = "bindGroup for work buffer",
+                Layout = pipeline.GetBindGroupLayout(0),
+                Entries = new GPUBindGroupEntry[] {
+                    new GPUBindGroupEntry
+                    {
+                        Binding = 0,
+                        Resource = new GPUBufferBinding{ Buffer = workBuffer }
+                    }
+                },
+            });
+
+            // Encode commands to do the computation
+            using var encoder = device.CreateCommandEncoder(new GPUCommandEncoderDescriptor
+            {
+                Label = "doubling encoder",
+            });
+
+            using var pass = encoder.BeginComputePass(new GPUComputePassDescriptor
+            {
+                Label = "doubling compute pass",
+            });
+            pass.SetPipeline(pipeline);
+            pass.SetBindGroup(0, bindGroup);
+            pass.DispatchWorkgroups((uint)inputByteLength);
+            pass.End();
+
+            // Encode a command to copy the results to a mappable buffer.
+            encoder.CopyBufferToBuffer(workBuffer, 0, resultBuffer, 0, resultBuffer.Size);
+
+            // Finish encoding and submit the commands
+            using var commandBuffer = encoder.Finish();
+            device.Queue.Submit([commandBuffer]);
+
+            // Read the results
+            await resultBuffer.MapAsync(GPUMapMode.Read);
+            using var result = new Float32Array(resultBuffer.GetMappedRange());
+
+            float[] resultF = result.ToArray();
+
+            Log($@"Input: {string.Join(", ", input.ToArray())}");
+            Log($@"Result: {string.Join(", ", resultF)}");
+
+            resultBuffer.Unmap();
+        }
+        finally
+        {
+            _running = false;
+        }
+    }
+}
