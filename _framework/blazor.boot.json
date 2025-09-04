@@ -1,7 +1,7 @@
 {
   "mainAssemblyName": "BlazorWASMWebGPUComputeDemo",
   "resources": {
-    "hash": "sha256-Pr6ou7etUeKR2ZiNZSHngUHWgAb3QptAiIVa6rCpyzw=",
+    "hash": "sha256-e+MHSdhCbK6GIASiaEs5xbFh3z/L9NfA6vQPo+W6qTg=",
     "jsModuleNative": {
       "dotnet.native.js": "sha256-ixjJf7/pJstKcKFVMJf+0943EgzAnPUSAdsrLh50MFU="
     },
@@ -60,7 +60,7 @@
       "System.Threading.wasm": "sha256-E/FnIJx6bWXYSc/F4dIg95zp/Etk64ne1m68YT4FOLE=",
       "System.Web.HttpUtility.wasm": "sha256-3cJaZeUb1Y37dQwkPJimN5GPsnAB8M6/9q8M4chV5OE=",
       "System.Private.CoreLib.wasm": "sha256-YAPjkyTzuF+bbAbW/avtKFkkfFD3dxwxATyto/Kd6UU=",
-      "BlazorWASMWebGPUComputeDemo.wasm": "sha256-lGD0ZD5SMU/+rXMjqflYfpnzJ80770GOcGLNlDtUSXM="
+      "BlazorWASMWebGPUComputeDemo.wasm": "sha256-37FB2VkUpdwAlD9k+CYFwoj0df3Mfd/uQGgozpuhov8="
     },
     "libraryInitializers": {
       "SpawnDev.BlazorJS.lib.module.js": "sha256-MSEFzzIHfyaslxH4GvsWrzxOUHz5n4SKxG0AiWpiYV0="
