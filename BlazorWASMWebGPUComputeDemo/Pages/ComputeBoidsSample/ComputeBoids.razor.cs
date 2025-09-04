@@ -14,7 +14,7 @@ namespace BlazorWASMWebGPUComputeDemo.Pages.ComputeBoidsSample
         [Inject]
         ShaderLoader ShaderLoader { get; set; } = default!;
 
-        string _log = "Ready";
+        string _log = "";
         bool _running = false;
 
         ElementReference canvasRef;
@@ -152,29 +152,12 @@ namespace BlazorWASMWebGPUComputeDemo.Pages.ComputeBoidsSample
                 return;
             }
 
-            var hasTimestampQuery = adapter.Features.Has("timestamp-query");
-            device = await adapter.RequestDevice(new GPUDeviceDescriptor
-            {
-                RequiredFeatures = hasTimestampQuery ? new List<string> { "timestamp-query" } : null,
-            });
+            device = await adapter.RequestDevice();
             if (device == null)
             {
                 Log("WebGPU not supported");
                 return;
             }
-
-            var perfDisplayContainer = document.CreateElement<HTMLDivElement>("div");
-            perfDisplayContainer.Style["color"] = "white";
-            perfDisplayContainer.Style["background"] = "black";
-            perfDisplayContainer.Style["position"] = "absolute";
-            perfDisplayContainer.Style["bottom"] = "10px";
-            perfDisplayContainer.Style["left"] = "10px";
-            perfDisplayContainer.Style["textAlign"] = "left";
-
-            var perfDisplay = document.CreateElement<HTMLElement>("pre");
-            perfDisplay.Style["margin"] = ".5em";
-            perfDisplayContainer.AppendChild(perfDisplay);
-            canvas.ParentNode!.AppendChild(perfDisplayContainer);
 
             context = canvas.GetWebGPUContext();
             var devicePixelRatio = window.DevicePixelRatio;
@@ -269,11 +252,6 @@ namespace BlazorWASMWebGPUComputeDemo.Pages.ComputeBoidsSample
             };
 
             computePassDescriptor = new GPUComputePassDescriptor();
-
-            if (hasTimestampQuery)
-            {
-                // omitted
-            }
 
             var vertexBufferData = new float[] {
                 -0.01f, -0.02f, 0.01f,
