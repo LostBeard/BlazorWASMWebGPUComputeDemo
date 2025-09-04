@@ -1,0 +1,155 @@
+﻿@page "/BasicDemo"
+@using SpawnDev.BlazorJS.JSObjects
+
+<canvas @ref=_canvasReference width="500px" height="500px" style="background:magenta"></canvas>
+
+@code
+{
+    [Inject]
+    public required BlazorJSRuntime JS { get; set; }
+
+    private GPUCanvasContext? _gpuCanvasContext;
+    private string? _presentationFormat;
+    private GPUAdapter? _adapter;
+    private GPUAdapterInfo? _adapterInfo;
+    private GPUDevice? _device;
+    private GPURenderPipeline? _renderPipeline;
+    private ElementReference _canvasReference;
+    private HTMLCanvasElement? _canvasElement;
+    private Window? _window;
+
+    private void Frame()
+    {
+        var commandEncoder = _device?.CreateCommandEncoder();
+
+        var textureView = _gpuCanvasContext?.GetCurrentTexture().CreateView();
+
+        var renderPassDescriptor = new GPURenderPassDescriptor
+        {
+            ColorAttachments = new[]
+                {
+                    new GPURenderPassColorAttachment
+                    {
+                        View = textureView!,
+                        ClearValue = new double[]{ 0d, 0d, 0d, 0d}, // Clear to transparent
+                        LoadOp = "clear",
+                        StoreOp = "store"
+                    }
+                }
+        };
+
+        var passEncoder = commandEncoder?.BeginRenderPass(renderPassDescriptor);
+
+        passEncoder?.SetPipeline(_renderPipeline);
+
+        passEncoder?.Draw(3);
+        passEncoder?.End();
+
+        var commandBuffer = commandEncoder?.Finish();
+
+        if (commandBuffer is null)
+        {
+            Console.WriteLine("Failed to create command buffer or device is null.");
+            return;
+        }
+        ;
+
+        _device?.Queue?.Submit(new[] { commandBuffer });
+
+        _window?.RequestAnimationFrame(Frame);
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+
+        if (firstRender)
+        {
+            _window = JS.Get<Window>("window");
+
+            _canvasElement = new HTMLCanvasElement(_canvasReference);
+
+            _gpuCanvasContext = _canvasElement.GetWebGPUContext();
+
+            using var navigator = JS.Get<Navigator>("navigator");
+
+            if (navigator is null || navigator.Gpu is null)
+            {
+                Console.WriteLine("WebGPU is not supported in this browser.");
+                return;
+            }
+
+            _presentationFormat = navigator.Gpu.GetPreferredCanvasFormat();
+
+            _adapter = await navigator.Gpu.RequestAdapter(new GPURequestAdapterOptions
+            {
+                PowerPreference = "high-performance"
+            });
+
+            if (_adapter is null)
+            {
+                Console.WriteLine("No suitable GPU adapter found.");
+                return;
+            }
+
+            _device = await _adapter.RequestDevice();
+
+            if (_device is null)
+            {
+                Console.WriteLine("Failed to create GPU device.");
+                return;
+            }
+
+            _gpuCanvasContext.Configure(new GPUCanvasConfiguration
+            {
+                Device = _device,
+                Format = _presentationFormat
+            });
+
+            _renderPipeline = _device.CreateRenderPipeline(new GPURenderPipelineDescriptor
+            {
+                Layout = "auto",
+                Vertex = new GPUVertexState
+                {
+                    Module = _device.CreateShaderModule(new GPUShaderModuleDescriptor
+                    {
+                        Code = @"
+                            @vertex
+                            fn main(
+                              @builtin(vertex_index) VertexIndex : u32
+                            ) -> @builtin(position) vec4f {
+                              var pos = array<vec2f, 3>(
+                                vec2(0.0, 0.5),
+                                vec2(-0.5, -0.5),
+                                vec2(0.5, -0.5)
+                              );
+
+                              return vec4f(pos[VertexIndex], 0.0, 1.0);
+                            }
+                            "
+                    }),
+                    EntryPoint = "main"
+                },
+                Fragment = new GPUFragmentState
+                {
+                    Module = _device.CreateShaderModule(new GPUShaderModuleDescriptor
+                    {
+                        Code = @"
+                            @fragment
+                            fn main() -> @location(0) vec4f {
+                              return vec4(1.0, 0.0, 0.0, 1.0);
+                            }"
+                    }),
+                    EntryPoint = "main",
+                    Targets = new[] { new GPUColorTargetState { Format = _presentationFormat } }
+                },
+                Primitive = new GPUPrimitiveState
+                {
+                    Topology = "triangle-list"
+                }
+            });
+
+            _window.RequestAnimationFrame(Frame);
+        }
+    }
+
+}
