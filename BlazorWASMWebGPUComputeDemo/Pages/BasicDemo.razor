@@ -1,5 +1,7 @@
-﻿@page "/BasicDemo"
+﻿@page "/"
+@page "/BasicDemo"
 @using SpawnDev.BlazorJS.JSObjects
+@implements IDisposable
 
 <canvas @ref=_canvasReference width="500px" height="500px" style="background:magenta"></canvas>
 
@@ -17,9 +19,30 @@
     private ElementReference _canvasReference;
     private HTMLCanvasElement? _canvasElement;
     private Window? _window;
+    bool Disposed;
+
+    public void Dispose()
+    {
+        Disposed = true;
+    }
+    void CleanUp()
+    {
+        _gpuCanvasContext?.Dispose();
+        _adapter?.Dispose();
+        _adapterInfo?.Dispose();
+        _device?.Dispose();
+        _renderPipeline?.Dispose();
+        _canvasElement?.Dispose();
+        _window?.Dispose();
+    }
 
     private void Frame()
     {
+        if (Disposed)
+        {
+            CleanUp();
+            return;
+        }
         var commandEncoder = _device?.CreateCommandEncoder();
 
         var textureView = _gpuCanvasContext?.GetCurrentTexture().CreateView();
@@ -56,6 +79,11 @@
 
         _device?.Queue?.Submit(new[] { commandBuffer });
 
+        if (Disposed)
+        {
+            CleanUp();
+            return;
+        }
         _window?.RequestAnimationFrame(Frame);
     }
 
