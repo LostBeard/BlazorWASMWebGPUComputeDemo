@@ -5,6 +5,8 @@ VisualStudioVersion = 17.14.36414.22
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BlazorWASMWebGPUComputeDemo", "BlazorWASMWebGPUComputeDemo\BlazorWASMWebGPUComputeDemo.csproj", "{D757DC99-EB3F-41CD-A261-F6A3946D92A5}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SpawnDev.Fractals", "..\..\SpawnDev.Fractals\SpawnDev.Fractals\SpawnDev.Fractals.csproj", "{5C8913B7-76A8-4909-AFA3-175FE131F756}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +17,10 @@ Global
 		{D757DC99-EB3F-41CD-A261-F6A3946D92A5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D757DC99-EB3F-41CD-A261-F6A3946D92A5}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D757DC99-EB3F-41CD-A261-F6A3946D92A5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5C8913B7-76A8-4909-AFA3-175FE131F756}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5C8913B7-76A8-4909-AFA3-175FE131F756}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5C8913B7-76A8-4909-AFA3-175FE131F756}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5C8913B7-76A8-4909-AFA3-175FE131F756}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

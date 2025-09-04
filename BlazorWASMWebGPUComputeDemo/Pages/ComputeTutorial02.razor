@@ -1,14 +1,14 @@
-﻿@page "/Tutorial01"
+﻿@* @page "/webgpu-compute-basics"
 
-<PageTitle>WebGPU Compute Tutorial 1 Demo</PageTitle>
+<PageTitle>WebGPU Compute Tutorial 2 Demo</PageTitle>
 
-<h1>WebGPU Compute Tutorial 1 Demo</h1>
+<h1>WebGPU Compute Tutorial 2 Demo</h1>
 
 <div style="padding: 1rem;">
     <p>This demo is based off the tutorial linked below.</p>
-    <a href="https://webgpufundamentals.org/webgpu/lessons/webgpu-fundamentals.html#run-computations-on-the-gpu">Run computations on the GPU</a>
+    <a href="https://webgpufundamentals.org/webgpu/lessons/webgpu-compute-shaders.html">WebGPU Compute Shader Basics</a>
     <p>
-        This example demonstrates a very basic compute shader that simply multiplies each value in the input data by 2 and returns the resulting array.
+
     </p>
 </div>
 <div style="padding: 1rem;">
@@ -56,17 +56,14 @@
             }
             Log("WebGPU supported");
 
+
+            var workgroupSize = new int[] { 1,2,3 };
+
             using var module = device.CreateShaderModule(new GPUShaderModuleDescriptor
             {
                 Label = "doubling compute module",
-                Code = @"
-                @group(0) @binding(0) var<storage, read_write> data: array<f32>;
+                Code = $@"
 
-                @compute @workgroup_size(1) fn computeSomething(@builtin(global_invocation_id) id: vec3u) {
-                    let i = id.x;
-                    data[i] = data[i] * 2.0;
-                }
-                ",
             });
 
             using var pipeline = device.CreateComputePipeline(new GPUComputePipelineDescriptor
@@ -99,7 +96,6 @@
             // Copy our input data to that buffer
             device.Queue.WriteBuffer(workBuffer, 0, inputFloatArray);
 
-            // Create a buffer for the result; in this case it is the same size as the input
             using var resultBuffer = device.CreateBuffer(new GPUBufferDescriptor
             {
                 Label = "result buffer",
@@ -107,7 +103,6 @@
                 Usage = GPUBufferUsage.MapRead | GPUBufferUsage.CopyDst
             });
 
-            // Create bind group
             using var bindGroup = device.CreateBindGroup(new GPUBindGroupDescriptor
             {
                 Label = "bindGroup for work buffer",
@@ -127,7 +122,6 @@
                 Label = "doubling encoder",
             });
 
-            // Begin pass
             using var pass = encoder.BeginComputePass(new GPUComputePassDescriptor
             {
                 Label = "doubling compute pass",
@@ -159,4 +153,88 @@
             StateHasChanged();
         }
     }
+
+
+    private int GiveMandelNumber(double x, double y, int _iterations = 400)
+    {
+        var mandelNumber = 0;
+        double a = 0, aOld = 0, b = 0, c = 0;
+        while (c <= 4 && mandelNumber < _iterations)
+        {
+            a = a * a - b * b + x;
+            b = 2 * aOld * b + y;
+            aOld = a;
+            c = a * a + b * b;
+            mandelNumber++;
+        }
+        return mandelNumber;
+    }
+
+    // void Mandelbrot()
+    // {
+    //     (int x, int y) xyStep = (1, 1);
+    //     var yMin = 0;
+    //     var xMin = 0;
+    //     var yMax = 0;
+    //     var xMax = 0;
+    //     var kLast = 0;
+    //     var kMin = 0;
+    //     var kMax = 1;
+    //     var color = 0;
+    //     var colorLast = 0;
+    //     var modulusSquared = 0;
+    //     for (double y = yMin; y < yMax; y += xyStep.y)
+    //     {
+    //         int xPix = 0;
+    //         for (double x = xMin; x < xMax; x += xyStep.x)
+    //         {
+    //             ComplexPoint c = new ComplexPoint(x, y);
+    //             ComplexPoint zk = new ComplexPoint(0, 0);
+    //             int k = 0;
+    //             do
+    //             {
+    //                 zk = zk.doCmplxSqPlusConst(c);
+    //                 modulusSquared = zk.doMoulusSq();
+    //                 k++;
+    //             } while ((modulusSquared <= 4.0) && (k < kMax));
+
+    //             if (k < kMax)
+    //             {
+    //                 if (k == kLast)
+    //                 {
+    //                     color = colorLast;
+    //                 }
+    //                 else
+    //                 {
+    //                     color = colourTable.GetColour(k);
+    //                     colorLast = color;
+    //                 }
+
+    //                 if (xyPixelStep == 1)
+    //                 {
+    //                     if ((xPix < myBitmap.Width) && (yPix >= 0))
+    //                     {
+    //                         myBitmap.SetPixel(xPix, yPix, color);
+    //                     }
+    //                 }
+    //                 else
+    //                 {
+    //                     for (int pX = 0; pX < xyPixelStep; pX++)
+    //                     {
+    //                         for (int pY = 0; pY < xyPixelStep; pY++)
+    //                         {
+    //                             if (((xPix + pX) < myBitmap.Width) && ((yPix - pY) >= 0))
+    //                             {
+    //                                 myBitmap.SetPixel(xPix + pX, yPix - pY, color);
+    //                             }
+    //                         }
+    //                     }
+    //                 }
+    //             }
+    //             xPix += xyPixelStep;
+    //         }
+    //         yPix -= xyPixelStep;
+    //     }
+    }
 }
+ *@

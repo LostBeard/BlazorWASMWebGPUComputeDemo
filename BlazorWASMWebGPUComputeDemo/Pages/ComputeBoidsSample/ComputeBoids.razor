@@ -1,0 +1,25 @@
+﻿@page "/"
+
+<PageTitle>WebGPU Compute Boids</PageTitle>
+
+<h1>WebGPU Compute Boids</h1>
+
+<div style="padding: 1rem;">
+    <p>This demo is based off the WebGPU sample linked below.</p>
+    <a href="https://github.com/webgpu/webgpu-samples/tree/main/sample/computeBoids">Compute Boids</a>
+    <p>
+        A GPU compute particle simulation that mimics
+        the flocking behavior of birds. A compute shader updates
+        two ping-pong buffers which store particle data. The data
+        is used to draw instanced particles.
+    </p>
+</div>
+<div style="padding: 1rem;">
+    <canvas @ref=canvasRef style="width: 500px; height: 500px;" />
+</div>
+<div style="padding: 1rem;">
+    <pre>
+        @_log
+    </pre>
+</div>
+
